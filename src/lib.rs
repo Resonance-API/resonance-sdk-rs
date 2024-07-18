@@ -1,7 +1,8 @@
-use send_event::SendEventRequest;
 use std::{error::Error, fmt::Display};
 
 mod send_event;
+
+pub use send_event::*;
 
 const URL_BASE: &str = "https://api.resonance-api.com";
 const APP_USER_AGENT: &str = concat!(env!("CARGO_PKG_NAME"), "/", env!("CARGO_PKG_VERSION"),);
