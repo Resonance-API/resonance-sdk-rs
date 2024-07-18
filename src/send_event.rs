@@ -33,7 +33,7 @@ impl SendEventRequestBuilder {
         }
     }
 
-    pub fn event_at(&mut self, at: &str) -> Result<&mut Self, String> {
+    pub fn event_at(mut self, at: &str) -> Result<Self, String> {
         let dt: DateTime<Utc> = DateTime::from_str(at).map_err(|e| {
             let err_msg = format!("Failed to parse timestamp {at} with error {e:?}");
             log::error!("{err_msg}");
@@ -43,7 +43,7 @@ impl SendEventRequestBuilder {
         Ok(self)
     }
 
-    pub fn data(&mut self, data: HashMap<String, String>) -> &mut Self {
+    pub fn data(mut self, data: HashMap<String, String>) -> Self {
         self.data = data;
         self
     }
