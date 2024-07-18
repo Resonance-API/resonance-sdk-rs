@@ -1,4 +1,5 @@
 use send_event::SendEventRequest;
+use std::{error::Error, fmt::Display};
 
 mod send_event;
 
@@ -40,11 +41,12 @@ impl ResonanceClient {
                 ResonanceClientError::FailedToSendRequest(err_msg)
             })?
             .error_for_status()
-            .map_err(map_response_err)?;
+            .map_err(ResonanceClientError::from)?;
         Ok(())
     }
 }
 
+#[derive(Debug, Clone)]
 pub enum ResonanceClientError {
     FailedToSendRequest(String),
     ClientSideError(u16, String),
@@ -52,18 +54,28 @@ pub enum ResonanceClientError {
     Unknown(String),
 }
 
-fn map_response_err(e: reqwest::Error) -> ResonanceClientError {
-    let err_msg = format!("Error response from send event request; {e:?}");
-    log::error!("{err_msg}");
-    if let Some(status) = e.status() {
-        if status.is_client_error() {
-            ResonanceClientError::ClientSideError(status.as_u16(), e.to_string())
-        } else if status.is_server_error() {
-            ResonanceClientError::ServerSideError(status.as_u16(), e.to_string())
+impl Display for ResonanceClientError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&format!("{self:?}"))
+    }
+}
+
+impl Error for ResonanceClientError {}
+
+impl From<reqwest::Error> for ResonanceClientError {
+    fn from(e: reqwest::Error) -> Self {
+        let err_msg = format!("Error response from send event request; {e:?}");
+        log::error!("{err_msg}");
+        if let Some(status) = e.status() {
+            if status.is_client_error() {
+                ResonanceClientError::ClientSideError(status.as_u16(), e.to_string())
+            } else if status.is_server_error() {
+                ResonanceClientError::ServerSideError(status.as_u16(), e.to_string())
+            } else {
+                ResonanceClientError::Unknown(err_msg)
+            }
         } else {
             ResonanceClientError::Unknown(err_msg)
         }
-    } else {
-        ResonanceClientError::Unknown(err_msg)
     }
 }
